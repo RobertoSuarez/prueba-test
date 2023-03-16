@@ -4,10 +4,13 @@ import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.roberto.Helper;
+import org.roberto.Parametros;
 import org.roberto.page.Cart;
 import org.roberto.page.Checkout;
 import org.roberto.page.Inventory;
 import org.roberto.page.LoginPage;
+
+import java.io.IOException;
 
 public class CompraTest {
 
@@ -41,10 +44,43 @@ public class CompraTest {
         Cart cart = new Cart(driver);
         Checkout checkout = new Checkout(driver);
 
+        String usuario;
+        String password;
+        String ordenadoPor;
+        Boolean desc;
+        Integer cantidad;
+        String nombre;
+        String apellido;
+        String codigo;
+
+
+        try {
+            // hoja de Excel con parametros
+            Parametros parametros = new Parametros();
+            parametros.loadData();
+            System.out.println("Usuario: " + parametros.getUser());
+            // obtenemos valores del excel
+            usuario = parametros.getUser();
+            password = parametros.getPassword();
+
+            ordenadoPor = parametros.getOrdenadoPor();
+            desc = parametros.getDesc();
+
+            cantidad = parametros.getCantidadProducto();
+            nombre = parametros.getNombre();
+            apellido = parametros.getApellido();
+            codigo = parametros.getCodigo();
+
+
+            parametros.cerrar();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         driver.get("https://www.saucedemo.com/");
 
         // Iniciamos sesión en el sistema
-        login.iniciarSesion("standard_user", "secret_sauce");
+        login.iniciarSesion(usuario, password);
 
         // verificamos que el login sea existo
         Boolean ok = login.inicioExitoso();
@@ -52,20 +88,18 @@ public class CompraTest {
 
         // Inventario
         Inventory inventory = new Inventory(driver);
-        inventory.ordenarProductos("name", true);
+        inventory.ordenarProductos(ordenadoPor, desc);
 
         // agregamos la cantidad de producto al carrito de compra
-        inventory.agregarAlCarrito(3);
+        inventory.agregarAlCarrito(cantidad);
 
         inventory.irAlCarrito();
 
-        helper.esperar(3);
 
         cart.irCheckout();
 
-        helper.esperar(3);
 
-        checkout.registrarInfo("Roberto", "Suárez", "123432");
+        checkout.registrarInfo(nombre, apellido, codigo);
         checkout.checkoutTwo();
 
         helper.esperar(3);
